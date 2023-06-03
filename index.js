@@ -37,9 +37,17 @@ async function run() {
     );
 
     const menuCollection = client.db("bistroDB").collection("menuCallection");
+    const reviewCollection = client
+      .db("bistroDB")
+      .collection("reviewCollection");
+    const cartCollection = client.db("bistroDB").collection("cartCollection");
 
     app.get("/menu", async (req, res) => {
       const menu = await menuCollection.find({}).toArray();
+      res.send(menu);
+    });
+    app.get("/reviews", async (req, res) => {
+      const menu = await reviewCollection.find({}).toArray();
       res.send(menu);
     });
 
@@ -47,6 +55,14 @@ async function run() {
       const id = req.params.id;
       const menu = await menuCollection.findOne({ _id: new ObjectId(id) });
       res.send(menu);
+    });
+
+    // carts collection
+    app.post("carts", async (req, res) => {
+      const items = req.body;
+      console.log(items);
+      const result = await itemsCollection.insertOne(items);
+      res.send(result);
     });
   } finally {
     // Ensures that the client will close when you finish/error
