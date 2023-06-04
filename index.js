@@ -58,10 +58,29 @@ async function run() {
     });
 
     // carts collection
-    app.post("carts", async (req, res) => {
+
+    app.get("/carts", async (req, res) => {
+      const email = req.query.email;
+      if (!email) {
+        res.send([]);
+      }
+      const query = { email: email };
+      const result = await cartCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.post("/carts", async (req, res) => {
       const items = req.body;
       console.log(items);
-      const result = await itemsCollection.insertOne(items);
+      const result = await cartCollection.insertOne(items);
+      res.send(result);
+    });
+
+    //cart delete
+    app.delete("/carts/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await cartCollection.deleteOne(query);
       res.send(result);
     });
   } finally {
