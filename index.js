@@ -5,6 +5,7 @@ const cors = require("cors");
 app.use(cors());
 app.use(express.json());
 require("dotenv").config();
+const jwt = require("jsonwebtoken");
 
 app.get("/", (req, res) => {
   res.send("Boss is sitting");
@@ -43,6 +44,14 @@ async function run() {
     const cartCollection = client.db("bistroDB").collection("cartCollection");
     const usersCollection = client.db("bistroDB").collection("usersCollection");
 
+    //jwt authorization
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
+        expiresIn: "1h",
+      });
+      res.send({ token });
+    });
     //menu api
     app.get("/menu", async (req, res) => {
       const menu = await menuCollection.find({}).toArray();
@@ -88,9 +97,33 @@ async function run() {
     });
 
     //user related api
+
+    app.get("/users", async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
+
     app.post("/users", async (req, res) => {
       const user = req.body;
+      const query = { email: user.email };
+      const existingUser = await usersCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: "User already exists" });
+      }
       const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
+    //admin api
+    app.patch("/users/admin/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: "admin",
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
   } finally {
